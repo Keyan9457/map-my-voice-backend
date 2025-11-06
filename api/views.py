@@ -4,24 +4,30 @@ from .serializers import ReviewSerializer
 from django.http import JsonResponse
 from django.db.models import Count, Case, When, FloatField, Q
 from django.db.models.functions import Cast
-
+from datetime import timedelta
+from django.utils.timezone import now
 # This helper function will get our base queryset based on URL filters
 def get_filtered_queryset(request):
-    """
-    Reads 'theme' and 'country' from the request's query parameters
-    and returns a filtered queryset.
-    """
     queryset = Review.objects.all()
+
     theme_filter = request.GET.get('theme')
     country_filter = request.GET.get('country')
+    timeframe = request.GET.get('timeframe')  # <-- NEW
 
     if theme_filter:
         queryset = queryset.filter(theme=theme_filter)
+
     if country_filter:
         queryset = queryset.filter(country=country_filter)
-        
-    return queryset
 
+    # TIME FILTER
+    if timeframe == "7d":
+        queryset = queryset.filter(created_at__gte=now() - timedelta(days=7))
+    elif timeframe == "30d":
+        queryset = queryset.filter(created_at__gte=now() - timedelta(days=30))
+    # "all" → no filter
+
+    return queryset
 # This viewset (for submitting reviews) does NOT change
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
@@ -83,3 +89,35 @@ def get_chart_data(request):
     }
     return JsonResponse(chart_data)
 
+# api/views.py (add this at the end)
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['GET'])
+def get_incident_reports(request):
+    """
+    This view returns all reviews that are incidents
+    (i.e., 'Bad' rating and have a latitude/longitude).
+    """
+    # Filter for reviews that are 'Bad' AND have latitude/longitude
+    incidents = Review.objects.filter(
+        rating='Bad', 
+        latitude__isnull=False, 
+        longitude__isnull=False
+    )
+
+    # Serialize the data into a simple format for the map
+    data = [
+        {
+            'id': incident.id,
+            'latitude': incident.latitude,
+            'longitude': incident.longitude,
+            'theme': incident.theme,
+            'report_type': incident.report_type,
+            'comment': incident.comment
+        } 
+        for incident in incidents
+    ]
+
+    return Response(data)

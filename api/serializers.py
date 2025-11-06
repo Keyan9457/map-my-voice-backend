@@ -5,4 +5,5 @@ from .models import Review
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = '__all__' # This tells the serializer to include all fields from our model
+        # This '__all__' is what automatically includes your new fields
+        fields = '__all__'
