@@ -25,3 +25,12 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.theme} review for {self.country} - {self.rating}"
+
+
+class Incident(models.Model):
+    theme = models.CharField(max_length=100)
+    report_type = models.CharField(max_length=100)
+    comment = models.TextField(blank=True, null=True)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    upvotes = models.IntegerField(default=0)  # <--- NEW

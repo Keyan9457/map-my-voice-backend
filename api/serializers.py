@@ -1,9 +1,13 @@
-# api/serializers.py
 from rest_framework import serializers
-from .models import Review
+from .models import Review, Incident
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        # This '__all__' is what automatically includes your new fields
+        fields = '__all__'
+
+
+class IncidentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Incident
         fields = '__all__'
